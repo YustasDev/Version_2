@@ -3,7 +3,7 @@ from skimage.exposure import is_low_contrast
 from imutils.paths import list_images
 from skimage import exposure
 import numpy as np
-import argparse
+from rembg import remove
 import imutils
 import cv2
 import sys
@@ -161,6 +161,7 @@ def low_contrast_image_processing(imagePath):
     cv2.imshow("Image", image)
     cv2.imshow("Edge", edged)
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 #https://docs.opencv.org/3.0-beta/modules/imgproc/doc/object_detection.html
@@ -192,6 +193,16 @@ def findingTempl_byLeastSquaresMethod(fullImage_path, imageTemplate_path):
     # cv2.waitKey(0)
 
     return cut_color_card
+
+
+#https://github.com/danielgatis/rembg
+def bg_remove3(input_path, output_path):
+    with open(input_path, 'rb') as i:
+        with open(output_path, 'wb') as o:
+            input = i.read()
+            output = remove(input)
+            o.write(output)
+    return output_path
 
 
 if __name__ == '__main__':
@@ -231,9 +242,14 @@ if __name__ == '__main__':
 
     # ================= getting the corrected image =============================================================>
 
-    input_image = cv2.imread('/home/progforce/Banana/yellow_banana.jpg')
+    original_image = '/home/progforce/Banana/yellow_banana.jpg'
+    output_image = 'clear_bananas.jpg'
+
+    input_image_path = bg_remove3(original_image, output_image)
+    input_image = cv2.imread(input_image_path)
     cv2.imshow("original input image", input_image)
     cv2.waitKey(0)
+
 
 
     result_image = match_histograms_mod(imageCard, refCard, input_image)
@@ -241,4 +257,5 @@ if __name__ == '__main__':
 
     cv2.imshow("corrected input image", result_image)
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
