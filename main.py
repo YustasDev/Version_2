@@ -172,7 +172,7 @@ if __name__ == '__main__':
     image = cv2.imread('/home/progforce/Banana/Version_2/fridge_1.jpg')
     templ = cv2.imread('/home/progforce/Banana/Version_2/cardTemplate1.jpg')
 
-
+    # =============== finding a color card in a photo from the fridge =============>
 
     #https: // github.com / neemiasbsilva / object - detection - opencv / blob / master / template - matching.ipynb
     # methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED',
@@ -189,22 +189,20 @@ if __name__ == '__main__':
     height, width, channels = templ.shape
     bottom_right = (top_left[0] + width, top_left[1] + height)
     cv2.rectangle(image_copy, top_left, bottom_right, (0, 0, 255), 2)
-    cv2.imshow(m, image_copy)
-    cv2.waitKey(0)
+    # cv2.imshow(m, image_copy)
+    # cv2.waitKey(0)
 
-    #imageRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     cut_color_card = image[top_left[1]:(top_left[1] + height), top_left[0]:(top_left[0] + width) ]
-    cv2.imshow("cut_color_card", cut_color_card)
+    # cv2.imshow("cut_color_card", cut_color_card)
+    # cv2.waitKey(0)
+
+
+
+    ref_image = cv2.imread('/home/progforce/Banana/Version_2/ref2.jpg')
+    input_image = cut_color_card
+    cv2.imshow("cut_color_card (for correction)", cut_color_card)
     cv2.waitKey(0)
 
-
-
-
-
-    """
-    ref_image = cv2.imread('/home/progforce/Banana/Version_2/ref2.jpg')
-    #input_image = cv2.imread('/home/progforce/Banana/Version_2/fridge_1.jpg')
-    input_image = cv2.imread('/home/progforce/Banana/Version_2/card_fridge1.jpg')
 
     # resize the reference and input images
     ref = imutils.resize(ref_image, width=600)
@@ -213,7 +211,15 @@ if __name__ == '__main__':
     # find the color matching card in each image
     print("[INFO] finding color matching cards...")
     refCard = find_color_card(ref)
-    imageCard = find_color_card(image)
+
+
+
+    # Instead of ...
+    #imageCard = find_color_card(image)
+    imageCard = cv2.imread('/home/progforce/Banana/Version_2/needForCorrect_fridge_1.jpg')
+    height, width, channels = refCard.shape
+    dsize = (width, height)
+    imageCard = cv2.resize(imageCard, dsize)
 
     # if the color matching card is not found in either the reference
     # image or the input image, gracefully exit
@@ -221,6 +227,17 @@ if __name__ == '__main__':
         print("[ERROR] could not find color matching card in both images")
         sys.exit(0)
 
+    # ================= getting the corrected image =============================================================>
+
+    input_image = cv2.imread('/home/progforce/Banana/yellow_banana.jpg')
+    cv2.imshow("original input image", input_image)
+    cv2.waitKey(0)
+
+
     result_image = match_histograms_mod(imageCard, refCard, input_image)
-    cv2.imwrite('outImage.jpg', result_image)
-    """
+    cv2.imwrite('outBananas.jpg', result_image)
+
+
+    cv2.imshow("corrected input image", result_image)
+    cv2.waitKey(0)
+
