@@ -8,6 +8,8 @@ import imutils
 import cv2
 import sys
 
+
+#https://pyimagesearch.com/2020/12/21/detecting-aruco-markers-with-opencv-and-python/
 def find_color_card(image):
     # load the ArUCo dictionary, grab the ArUCo parameters, and
     # detect the markers in the input image
@@ -104,7 +106,7 @@ def _match_cumulative_cdf_mod(source, template, full):
     return ret2
 
 
-
+#https://pyimagesearch.com/2021/02/15/automatic-color-correction-with-opencv-and-python/
 def match_histograms_mod(inputCard, referenceCard, fullImage):
     """
         Return modified full image, by using histogram equalizatin on input and
@@ -161,20 +163,13 @@ def low_contrast_image_processing(imagePath):
     cv2.waitKey(0)
 
 
+#https://docs.opencv.org/3.0-beta/modules/imgproc/doc/object_detection.html
+def findingTempl_byLeastSquaresMethod(fullImage_path, imageTemplate_path):
 
+    image = cv2.imread(fullImage_path)
+    templ = cv2.imread(imageTemplate_path)
 
-if __name__ == '__main__':
-
-
-    #low_contrast_image_processing('/home/progforce/Banana/Version_2/card_fridge1.jpg')
-    #low_contrast_image_processing('/home/progforce/Banana/Version_2/fridge_1.jpg')
-
-    image = cv2.imread('/home/progforce/Banana/Version_2/fridge_1.jpg')
-    templ = cv2.imread('/home/progforce/Banana/Version_2/cardTemplate1.jpg')
-
-    # =============== finding a color card in a photo from the fridge =============>
-
-    #https: // github.com / neemiasbsilva / object - detection - opencv / blob / master / template - matching.ipynb
+    # https://github.com/neemiasbsilva/object-detection-opencv/blob/master/template-matching.ipynb
     # methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED',
     #            'cv2.TM_CCORR', 'cv2.TM_CCORR', 'cv2.TM_CCORR_NORMED',
     #            'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
@@ -192,30 +187,37 @@ if __name__ == '__main__':
     # cv2.imshow(m, image_copy)
     # cv2.waitKey(0)
 
-    cut_color_card = image[top_left[1]:(top_left[1] + height), top_left[0]:(top_left[0] + width) ]
+    cut_color_card = image[top_left[1]:(top_left[1] + height), top_left[0]:(top_left[0] + width)]
     # cv2.imshow("cut_color_card", cut_color_card)
     # cv2.waitKey(0)
 
+    return cut_color_card
 
+
+if __name__ == '__main__':
+
+
+    #low_contrast_image_processing('/home/progforce/Banana/Version_2/card_fridge1.jpg')
+    #low_contrast_image_processing('/home/progforce/Banana/Version_2/fridge_1.jpg')
+
+    # image = cv2.imread('/home/progforce/Banana/Version_2/fridge_1.jpg')
+    # templ = cv2.imread('/home/progforce/Banana/Version_2/cardTemplate1.jpg')
 
     ref_image = cv2.imread('/home/progforce/Banana/Version_2/ref2.jpg')
-    input_image = cut_color_card
-    cv2.imshow("cut_color_card (for correction)", cut_color_card)
-    cv2.waitKey(0)
+    # input_image = cut_color_card
+    # cv2.imshow("cut_color_card (for correction)", cut_color_card)
+    # cv2.waitKey(0)
 
 
     # resize the reference and input images
     ref = imutils.resize(ref_image, width=600)
-    image = imutils.resize(input_image, width=600)
+    # image = imutils.resize(input_image, width=600)
 
     # find the color matching card in each image
     print("[INFO] finding color matching cards...")
     refCard = find_color_card(ref)
 
-
-
-    # Instead of ...
-    #imageCard = find_color_card(image)
+    # Instead of ...  ==> imageCard = find_color_card(image)
     imageCard = cv2.imread('/home/progforce/Banana/Version_2/needForCorrect_fridge_1.jpg')
     height, width, channels = refCard.shape
     dsize = (width, height)
@@ -236,7 +238,6 @@ if __name__ == '__main__':
 
     result_image = match_histograms_mod(imageCard, refCard, input_image)
     cv2.imwrite('outBananas.jpg', result_image)
-
 
     cv2.imshow("corrected input image", result_image)
     cv2.waitKey(0)
