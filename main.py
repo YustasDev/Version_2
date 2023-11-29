@@ -296,7 +296,7 @@ if __name__ == '__main__':
         # if the color matching card is not found in either the reference
         # image or the input image, gracefully exit
         if refCard is None or imageCard is None:
-            print("[ERROR] could not find color matching card in both images")
+            print("[ERROR] color cards are not recognized")
             sys.exit(0)
 
         # ================= getting the corrected image =============================================================>
