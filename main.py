@@ -2,11 +2,13 @@ from imutils.perspective import four_point_transform
 from skimage.exposure import is_low_contrast
 from imutils.paths import list_images
 from skimage import exposure
+from scipy.ndimage import interpolation as inter
 import numpy as np
 from rembg import remove
 import imutils
 import cv2
 import sys
+import os
 
 
 #https://pyimagesearch.com/2020/12/21/detecting-aruco-markers-with-opencv-and-python/
@@ -204,21 +206,64 @@ def bg_remove3(input_path, output_path):
             o.write(output)
     return output_path
 
+def perspective_transformation(input_file):
+
+    img = cv2.imread(input_file)
+    rows, cols, ch = img.shape
+    pts1 = np.float32([[60, 10], [787, 21], [54, 1104], [841, 1077]])
+    pts2 = np.float32([[0, 0], [841, 0], [0, 1104], [841, 1104]])
+
+    M = cv2.getPerspectiveTransform(pts1, pts2)
+    dst = cv2.warpPerspective(img, M, (850, 1105))
+
+    correctedFile = 'correctedImg.jpg'
+    cv2.imwrite(correctedFile, dst)
+    #cv2.imshow('corrected', dst)
+    return correctedFile
+
+
+
+def correct_skew(image, delta=0.5, limit=45):
+    def determine_score(arr, angle):
+        data = inter.rotate(arr, angle, reshape=False, order=0)
+        histogram = np.sum(data, axis=1, dtype=float)
+        score = np.sum((histogram[1:] - histogram[:-1]) ** 2, dtype=float)
+        return histogram, score
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+
+    scores = []
+    angles = np.arange(-limit, limit + delta, delta)
+    for angle in angles:
+        histogram, score = determine_score(thresh, angle)
+        scores.append(score)
+
+    best_angle = angles[scores.index(max(scores))]
+
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, best_angle, 1.0)
+    corrected = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, \
+            borderMode=cv2.BORDER_REPLICATE)
+
+    return best_angle, corrected
+
+
 
 if __name__ == '__main__':
 
-
-    #low_contrast_image_processing('/home/progforce/Banana/Version_2/card_fridge1.jpg')
-    #low_contrast_image_processing('/home/progforce/Banana/Version_2/fridge_1.jpg')
-
-    # image = cv2.imread('/home/progforce/Banana/Version_2/fridge_1.jpg')
-    # templ = cv2.imread('/home/progforce/Banana/Version_2/cardTemplate1.jpg')
-
-    ref_image = cv2.imread('/home/progforce/Banana/Version_2/ref2.jpg')
-    # input_image = cut_color_card
-    # cv2.imshow("cut_color_card (for correction)", cut_color_card)
+    """ pre-treatment in case of angular inclination  """
+    # imageforCorrect = cv2.imread('/home/progforce/Banana/Version_2/TempColorCard/CCfromfridge7.png')
+    # angle, corrected_img = correct_skew(imageforCorrect)
+    # print('angle: ', angle)
+    # cv2.imwrite('/home/progforce/Banana/Version_2/TempColorCard/corrected_fromFridge7.jpg', corrected_img)
+    # cv2.imshow("card correction", corrected_img)
     # cv2.waitKey(0)
 
+    ref_image = cv2.imread('/home/progforce/Banana/Version_2/ref2.jpg')
+    # cv2.imshow("cut_color_card (for correction)", cut_color_card)
+    # cv2.waitKey(0)
 
     # resize the reference and input images
     ref = imutils.resize(ref_image, width=600)
@@ -228,34 +273,47 @@ if __name__ == '__main__':
     print("[INFO] finding color matching cards...")
     refCard = find_color_card(ref)
 
-    # Instead of ...  ==> imageCard = find_color_card(image)
-    imageCard = cv2.imread('/home/progforce/Banana/Version_2/needForCorrect_fridge_1.jpg')
-    height, width, channels = refCard.shape
-    dsize = (width, height)
-    imageCard = cv2.resize(imageCard, dsize)
 
-    # if the color matching card is not found in either the reference
-    # image or the input image, gracefully exit
-    if refCard is None or imageCard is None:
-        print("[ERROR] could not find color matching card in both images")
-        sys.exit(0)
+    directory_colorCard = '/home/progforce/Banana/Version_2/ColorCard_fromFridges'
+    allColorCards = sorted(os.listdir(directory_colorCard))
+    #print(allColorCards)
 
-    # ================= getting the corrected image =============================================================>
+    directory_bananaImages = '/home/progforce/Banana/Version_2/imageSetfromFridges'
+    allBananaImages = sorted(os.listdir(directory_bananaImages))
+    #print(allBananaImages)
 
-    original_image = '/home/progforce/Banana/yellow_banana.jpg'
-    output_image = 'clear_bananas.jpg'
-
-    input_image_path = bg_remove3(original_image, output_image)
-    input_image = cv2.imread(input_image_path)
-    cv2.imshow("original input image", input_image)
-    cv2.waitKey(0)
+    directory_bananaOutput = '/home/progforce/Banana/Version_2/correctedBananaImages'
 
 
+    for index, element in enumerate(allColorCards):
 
-    result_image = match_histograms_mod(imageCard, refCard, input_image)
-    cv2.imwrite('outBananas.jpg', result_image)
+        # Instead of ...  ==> imageCard = find_color_card(image)
+        imageCard = cv2.imread(directory_colorCard + '/' + element)
+        height, width, channels = refCard.shape
+        dsize = (width, height)
+        imageCard = cv2.resize(imageCard, dsize)
 
-    cv2.imshow("corrected input image", result_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+        # if the color matching card is not found in either the reference
+        # image or the input image, gracefully exit
+        if refCard is None or imageCard is None:
+            print("[ERROR] could not find color matching card in both images")
+            sys.exit(0)
+
+        # ================= getting the corrected image =============================================================>
+
+        original_image = directory_bananaImages + '/' + allBananaImages[index]
+        output_image = 'removeBG_fromFridge_' + str(index + 1) + '.jpg'
+
+        input_image_path = bg_remove3(original_image, output_image)
+        input_image = cv2.imread(input_image_path)
+        # cv2.imshow("original input image", input_image)
+        # cv2.waitKey(0)
+
+        result_image = match_histograms_mod(imageCard, refCard, input_image)
+        outFileName = directory_bananaOutput + '/correctedImageFromFridge_' + str(index + 1) + '.jpg'
+        cv2.imwrite(outFileName, result_image)
+        os.remove(output_image)
+        # cv2.imshow("corrected input image", result_image)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
