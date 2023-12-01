@@ -89,22 +89,18 @@ if __name__ == '__main__':
 
     number_Fridge = '5'
     path_to_image_fromFridge = './imageSetfromFridges/fromFridge_5_112723in1146_origin.jpg'
-    path_to_temple_roomCard_fromFridges = './manuallyCutCards/templeRoomCard_fromFridge_5.jpg'
-    path_to_fullImage_withCrudeRoomCard = './imageSetfromFridges/fullImage_fromFridge_5.jpg'
+    path_to_crud_roomCard_fromFridges = './manuallyCutCards/crudRoomCard_fromFridge_5.jpg'
     path_to_roomCard_fromFridges = './roomCard_forCalibrate/roomCard_' + number_Fridge + '.jpg'
 
     refCard = cv2.imread('refCard.jpg')
 
     if len(sys.argv) == 1:
-        crudRoomCard = findingTempl_byLeastSquaresMethod(path_to_fullImage_withCrudeRoomCard,
-                                                         path_to_temple_roomCard_fromFridges)
+        crudRoomCard = cv2.imread(path_to_crud_roomCard_fromFridges)
     else:
         number_Fridge = sys.argv[1]
         path_to_image_fromFridge = sys.argv[2]
-        path_to_fullImage_withCrudeRoomCard = sys.argv[3]
-        path_to_temple_roomCard_fromFridges = './manuallyCutCards/templeRoomCard_fromFridge_' + number_Fridge + '.jpg'
-        crudRoomCard = findingTempl_byLeastSquaresMethod(path_to_fullImage_withCrudeRoomCard,
-                                                         path_to_temple_roomCard_fromFridges)
+        path_to_crud_roomCard_fromFridges = sys.argv[3]
+        crudRoomCard = cv2.imread(path_to_crud_roomCard_fromFridges)
 
     angle, crudRoomCard = correct_skew(crudRoomCard)
 
@@ -114,8 +110,8 @@ if __name__ == '__main__':
 
 
     print('angle: ', angle)
-    cv2.imshow("RoomCard", roomCard)
-    cv2.waitKey(0)
+    # cv2.imshow("RoomCard", roomCard)
+    # cv2.waitKey(0)
 
     cv2.imwrite(path_to_roomCard_fromFridges, roomCard)
 
