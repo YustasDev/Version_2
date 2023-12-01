@@ -9,6 +9,9 @@ import imutils
 import cv2
 import sys
 import os
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 
 
 #https://pyimagesearch.com/2020/12/21/detecting-aruco-markers-with-opencv-and-python/
@@ -253,67 +256,73 @@ def correct_skew(image, delta=0.5, limit=45):
 
 if __name__ == '__main__':
 
-    """ pre-treatment in case of angular inclination  """
-    # imageforCorrect = cv2.imread('/home/progforce/Banana/Version_2/TempColorCard/CCfromfridge7.png')
-    # angle, corrected_img = correct_skew(imageforCorrect)
-    # print('angle: ', angle)
-    # cv2.imwrite('/home/progforce/Banana/Version_2/TempColorCard/corrected_fromFridge7.jpg', corrected_img)
-    # cv2.imshow("card correction", corrected_img)
-    # cv2.waitKey(0)
+    """    option #1 - photos of Color Cards of good quality   """
+    # reading a reference color card (perfect quality)
+    pre_ref_card = cv2.imread('./ref2.jpg')
 
-    ref_image = cv2.imread('/home/progforce/Banana/Version_2/ref2.jpg')
-    # cv2.imshow("cut_color_card (for correction)", cut_color_card)
-    # cv2.waitKey(0)
+    # reading a room(fridge) color card (good quality)
+    pre_room_card = cv2.imread('./cards/A4DFF7EA-B4A1-401C-92DE-5F0958B541E5.jpg')
 
     # resize the reference and input images
-    ref = imutils.resize(ref_image, width=600)
-    # image = imutils.resize(input_image, width=600)
+    ref_card = imutils.resize(pre_ref_card, width=600)
+    skew_room_card = imutils.resize(pre_room_card, width=600)
 
-    # find the color matching card in each image
+    # pre-treatment in case of angular inclination  - by default, we assume that the picture is skew
+    angle, room_card = correct_skew(skew_room_card)
+    print('angle: ', angle)
+    # cv2.imshow("room_card correction", room_card)
+    # cv2.waitKey(0)
+
+
+    #find the color matching card in each image
     print("[INFO] finding color matching cards...")
-    refCard = find_color_card(ref)
+    refCard = find_color_card(ref_card)
+    roomCard = find_color_card(room_card)
+
+    # if necessary, you can save the working version of the "roomCard" and "refCard"
+    # cv2.imwrite('path/to/roomCard', roomCard)
+
+    #checking recognizing color cards
+    if refCard is None or roomCard is None:
+        print("[ERROR] color cards are not recognized")
+        # if roomcard is not found, but we know exactly its size in pixels in the photo from the fridge,
+        # we can find it using the method ==> findingTempl_byLeastSquaresMethod(fullImage_path, imageTemplate_path)
+        # where: fullImage_path - path to foto from fridge, imageTemplate_path - path to "refCard" with the dimensions
+        # in pixels exactly corresponding to the size of the "roomCard" in the photo from the fridge
 
 
-    directory_colorCard = '/home/progforce/Banana/Version_2/ColorCard_fromFridges'
-    allColorCards = sorted(os.listdir(directory_colorCard))
-    #print(allColorCards)
+    # otherwise, the "roomCard" will have to be done manually
+    """    option #2 - photos of Color Cards of bad quality
+       you can just skip this part if the "roomCard" is of good quality  """
 
-    directory_bananaImages = '/home/progforce/Banana/Version_2/imageSetfromFridges'
-    allBananaImages = sorted(os.listdir(directory_bananaImages))
-    #print(allBananaImages)
+    roomCard = cv2.imread('./ColorCard_fromFridges/colorCard_fridge_2.jpg')
 
-    directory_bananaOutput = '/home/progforce/Banana/Version_2/correctedBananaImages'
+    #Since I used a graphic editor to cut and save a "room card" from photos in
+    # the fridge, I don't know exactly what pixel size the cut-out image has.
+    # Therefore, it is necessary to adjust its size in accordance with the size of the "refCard"
+    height, width, channels = refCard.shape
+    dsize = (width, height)
+    roomCard = cv2.resize(roomCard, dsize)
+
+    """     End option #2       """
+
+    # before correcting the color of the fruit, remove the background in the image
+    original_image_path_from_fridge = './imageSetfromFridges/fromFridge_2_112923in1209_origin.jpg'
+    output_image = 'removeBG_fromFridge.jpg'
+
+    input_image_path = bg_remove3(original_image_path_from_fridge, output_image)
+    input_image = cv2.imread(input_image_path)
+    # cv2.imshow("original input image", input_image)
+    # cv2.waitKey(0)
 
 
-    for index, element in enumerate(allColorCards):
+    # we'll get the corrected image of fruits
+    result_image = match_histograms_mod(roomCard, refCard, input_image)
+    outFileName = './correctedBananaImages/image_2.jpg'
+    cv2.imwrite(outFileName, result_image)
+    os.remove(output_image)
+    # cv2.imshow("corrected input image", result_image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
-        # Instead of ...  ==> imageCard = find_color_card(image)
-        imageCard = cv2.imread(directory_colorCard + '/' + element)
-        height, width, channels = refCard.shape
-        dsize = (width, height)
-        imageCard = cv2.resize(imageCard, dsize)
-
-        # if the color matching card is not found in either the reference
-        # image or the input image, gracefully exit
-        if refCard is None or imageCard is None:
-            print("[ERROR] color cards are not recognized")
-            sys.exit(0)
-
-        # ================= getting the corrected image =============================================================>
-
-        original_image = directory_bananaImages + '/' + allBananaImages[index]
-        output_image = 'removeBG_fromFridge_' + str(index + 1) + '.jpg'
-
-        input_image_path = bg_remove3(original_image, output_image)
-        input_image = cv2.imread(input_image_path)
-        # cv2.imshow("original input image", input_image)
-        # cv2.waitKey(0)
-
-        result_image = match_histograms_mod(imageCard, refCard, input_image)
-        outFileName = directory_bananaOutput + '/correctedImageFromFridge_' + str(index + 1) + '.jpg'
-        cv2.imwrite(outFileName, result_image)
-        os.remove(output_image)
-        # cv2.imshow("corrected input image", result_image)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
 
