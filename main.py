@@ -1,5 +1,8 @@
 from imutils.perspective import four_point_transform
 from skimage.exposure import is_low_contrast
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle, Circle
+from skimage.io import imread, imshow
 from imutils.paths import list_images
 from skimage import exposure
 from scipy.ndimage import interpolation as inter
@@ -8,6 +11,7 @@ from rembg import remove
 import imutils
 import cv2
 import sys
+from sys import argv
 import os
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -253,8 +257,29 @@ def correct_skew(image, delta=0.5, limit=45):
     return best_angle, corrected
 
 
+def whitepatch_balancing(image, from_row, from_column, row_width, column_width):
+    fig, ax = plt.subplots(1,2, figsize=(10,5))
+    ax[0].imshow(image)
+    ax[0].add_patch(Circle((from_column, from_row),
+                              linewidth=3,
+                              edgecolor='r', facecolor='none'));
+
+    ax[0].set_title('Original image')
+    image_patch = image[from_row:from_row+row_width, from_column:from_column+column_width]
+    image_max = (image*1.0 / image_patch.max(axis=(0, 1))).clip(0, 1)
+    ax[1].imshow(image_max);
+    ax[1].set_title('Whitebalanced Image with MAX value of white')
+    plt.show()
+    return image_max
+
+
+
+
+
+
 
 if __name__ == '__main__':
+
 
     """    option #1 - photos of Color Cards of good quality   """
     # reading a reference color card (perfect quality)
@@ -295,7 +320,7 @@ if __name__ == '__main__':
     """    option #2 - photos of Color Cards of bad quality
        you can just skip this part if the "roomCard" is of good quality  """
 
-    roomCard = cv2.imread('./ColorCard_fromFridges/colorCard_fridge_2.jpg')
+    roomCard = cv2.imread('./ColorCard_fromFridges/colorCard_fridge_3.jpg')
 
     #Since I used a graphic editor to cut and save a "room card" from photos in
     # the fridge, I don't know exactly what pixel size the cut-out image has.
@@ -307,7 +332,7 @@ if __name__ == '__main__':
     """     End option #2       """
 
     # before correcting the color of the fruit, remove the background in the image
-    original_image_path_from_fridge = './imageSetfromFridges/fromFridge_2_112923in1209_origin.jpg'
+    original_image_path_from_fridge = './imageSetfromFridges/fromFridge_3_011223in1206_origin.jpg'
     output_image = 'removeBG_fromFridge.jpg'
 
     input_image_path = bg_remove3(original_image_path_from_fridge, output_image)
@@ -318,11 +343,15 @@ if __name__ == '__main__':
 
     # we'll get the corrected image of fruits
     result_image = match_histograms_mod(roomCard, refCard, input_image)
-    outFileName = './correctedBananaImages/image_2.jpg'
+    outFileName = './correctedBananaImages/imageOut011223_1206.jpg'
     cv2.imwrite(outFileName, result_image)
     os.remove(output_image)
-    # cv2.imshow("corrected input image", result_image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    cv2.imshow("corrected input image with colorCard", result_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    # input_image = imread('./imageSetfromFridges/fromFridge_3_011223in1206_origin.jpg')
+    # whitebalanceCorrected = whitepatch_balancing(input_image, 73, 1084, 10, 10)
+
 
 
