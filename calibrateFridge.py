@@ -58,8 +58,11 @@ def find_color_card(path_to_image):
 
 if __name__ == '__main__':
 
-    number_Fridge = '2'
+
+
+    number_Fridge = '3'
     path_to_image_fromFridge = './cards/rotateTest1.jpg'
+    refCard = cv2.imread('refCard.jpg')
 
     if len(sys.argv)==1:
         roomCard = find_color_card(path_to_image_fromFridge)
@@ -69,8 +72,12 @@ if __name__ == '__main__':
         path_to_image_fromFridge = sys.argv[2]
         roomCard = find_color_card(path_to_image_fromFridge)
 
-    cv2.imshow("roomCard", roomCard)
-    cv2.waitKey(0)
+    # cv2.imshow("roomCard", roomCard)
+    # cv2.waitKey(0)
+
+    height, width, channels = refCard.shape
+    dsize = (width, height)
+    roomCard = cv2.resize(roomCard, dsize)
 
     path_to_roomCard = './roomCard_forCalibrate/roomCard_' + number_Fridge + '.jpg'
     cv2.imwrite(path_to_roomCard, roomCard)
