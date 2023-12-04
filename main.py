@@ -320,7 +320,7 @@ if __name__ == '__main__':
     """    option #2 - photos of Color Cards of bad quality
        you can just skip this part if the "roomCard" is of good quality  """
 
-    roomCard = cv2.imread('./ColorCard_fromFridges/colorCard_fridge_3.jpg')
+    roomCard = cv2.imread('./ColorCard_fromFridges/colorCard_fridge_6.jpg')
 
     #Since I used a graphic editor to cut and save a "room card" from photos in
     # the fridge, I don't know exactly what pixel size the cut-out image has.
@@ -332,7 +332,7 @@ if __name__ == '__main__':
     """     End option #2       """
 
     # before correcting the color of the fruit, remove the background in the image
-    original_image_path_from_fridge = './imageSetfromFridges/fromFridge_3_011223in1206_origin.jpg'
+    original_image_path_from_fridge = './imageSetfromFridges/fromFridge_6_04122023in1405_origin.jpg'
     output_image = 'removeBG_fromFridge.jpg'
 
     input_image_path = bg_remove3(original_image_path_from_fridge, output_image)
@@ -343,15 +343,15 @@ if __name__ == '__main__':
 
     # we'll get the corrected image of fruits
     result_image = match_histograms_mod(roomCard, refCard, input_image)
-    outFileName = './correctedBananaImages/imageOut011223_1206.jpg'
+    outFileName = './correctedBananaImages/imageOut04122023_1405.jpg'
     cv2.imwrite(outFileName, result_image)
     os.remove(output_image)
     cv2.imshow("corrected input image with colorCard", result_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    # input_image = imread('./imageSetfromFridges/fromFridge_3_011223in1206_origin.jpg')
-    # whitebalanceCorrected = whitepatch_balancing(input_image, 73, 1084, 10, 10)
+    input_image = imread('./imageSetfromFridges/fromFridge_6_04122023in1405_origin.jpg')
+    whitebalanceCorrected = whitepatch_balancing(input_image, 98, 320, 10, 10)
 
 
 

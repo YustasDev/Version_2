@@ -9,6 +9,7 @@ from scipy.ndimage import interpolation as inter
 import numpy as np
 from rembg import remove
 import imutils
+import configparser
 import cv2
 import sys
 from sys import argv
@@ -58,11 +59,12 @@ def find_color_card(path_to_image):
 
 if __name__ == '__main__':
 
+    config = configparser.ConfigParser()
+    config.read("settings.ini")
 
-
-    number_Fridge = '3'
-    path_to_image_fromFridge = './cards/rotateTest1.jpg'
-    refCard = cv2.imread('refCard.jpg')
+    number_Fridge = config["Bananas"]["number_Fridge"]
+    path_to_image_fromFridge = config["Bananas"]["image_from_Fridge"]
+    refCard = cv2.imread(config["Bananas"]["ref_card"])
 
     if len(sys.argv)==1:
         roomCard = find_color_card(path_to_image_fromFridge)
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     dsize = (width, height)
     roomCard = cv2.resize(roomCard, dsize)
 
-    path_to_roomCard = './roomCard_forCalibrate/roomCard_' + number_Fridge + '.jpg'
+    path_to_roomCard = config["Bananas"]["path_to_roomCard"] + number_Fridge + '.jpg'
     cv2.imwrite(path_to_roomCard, roomCard)
 
 

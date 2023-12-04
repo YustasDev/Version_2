@@ -9,6 +9,7 @@ from scipy.ndimage import interpolation as inter
 import numpy as np
 from rembg import remove
 import imutils
+import configparser
 import cv2
 import sys
 from sys import argv
@@ -143,30 +144,33 @@ def _match_cumulative_cdf_mod(source, template, full):
 
 if __name__ == '__main__':
 
-    number_Fridge = '2'
-    path_to_image_fromFridge = './imageSetfromFridges/fromFridge_2_112923in1209_origin.jpg'
-    path_to_roomCard_fromFridges = './roomCard_forCalibrate/roomCard_' + number_Fridge + '.jpg'
+    config = configparser.ConfigParser()
+    config.read("settings.ini")
 
-    refCard = cv2.imread('refCard.jpg')
+    number_Fridge = config["Bananas"]["number_Fridge"]
+    path_to_image_fromFridge = config["Bananas"]["image_from_Fridge"]
+    path_to_roomCard = config["Bananas"]["path_to_roomCard"] + number_Fridge + '.jpg'
+    refCard = cv2.imread(config["Bananas"]["ref_card"])
+
 
     if len(sys.argv)==1:
-        roomCard = cv2.imread(path_to_roomCard_fromFridges)
+        roomCard = cv2.imread(path_to_roomCard)
     else:
         number_Fridge = sys.argv[1]
         path_to_image_fromFridge = sys.argv[2]
-        path_to_roomCard_fromFridges = './roomCard_forCalibrate/roomCard_' + number_Fridge + '.jpg'
-        roomCard = cv2.imread(path_to_roomCard_fromFridges)
+        path_to_roomCard = config["Bananas"]["path_to_roomCard"] + number_Fridge + '.jpg'
+        roomCard = cv2.imread(path_to_roomCard)
 
-    output_image = 'removeBG_fromFridgeImage.jpg'
-    input_image_path = bg_remove3(path_to_image_fromFridge, output_image)
+    interim_output_image = 'removeBG_fromFridgeImage.jpg'
+    input_image_path = bg_remove3(path_to_image_fromFridge, interim_output_image)
     input_image = cv2.imread(input_image_path)
     cv2.imshow("input image", input_image)
     cv2.waitKey(0)
 
     result_image = match_histograms_mod(roomCard, refCard, input_image)
-    outFileName = './outputImages/correctedImage_fromFridge_' + number_Fridge + '.jpg'
+    outFileName = config["Bananas"]["outFileName"] + number_Fridge + '.jpg'
     cv2.imwrite(outFileName, result_image)
-    os.remove(output_image)
+    os.remove(interim_output_image)
     cv2.imshow("corrected input image with colorCard", result_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
