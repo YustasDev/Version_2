@@ -1,11 +1,5 @@
 from imutils.perspective import four_point_transform
-from skimage.exposure import is_low_contrast
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, Circle
-from skimage.io import imread, imshow
-from imutils.paths import list_images
-from skimage import exposure
-from scipy.ndimage import interpolation as inter
+from PIL import Image
 import numpy as np
 from rembg import remove
 import imutils
@@ -139,7 +133,58 @@ def _match_cumulative_cdf_mod(source, template, full):
     return ret2
 
 
+def getScore(r, g, b):
+    hue = None
+    r /= 255
+    g /= 255
+    b /= 255
+    maxx = max(r,g,b)
+    minn = min(r,g,b)
+    c = maxx - minn
+    if c == 0:
+        hue = 0
+    elif maxx == r:
+        segment = (g - b) / c
+        shift = 0 / 60
+        if segment < 0:
+            shift = 360 / 60
+        hue = segment + shift
+    elif maxx == g:
+        segment = (b - r) / c
+        shift = 120 / 60
+        hue = segment + shift
+    elif maxx == b:
+        segment = (r - g) / c
+        shift = 240 / 60
+        hue = segment + shift
+    return hue * 60
 
+def getMeanRGB(cleared_img):
+    image = Image.open(cleared_img).convert("RGB")
+
+    w, h = image.size
+    rr, gg, bb = 0, 0, 0
+    countPix = 0
+
+    for x in range(w):
+        for y in range(h):
+            r,g,b = image.getpixel((x, y))
+            if(r>0 and g>0 and b>0):
+                countPix = countPix + 1
+                rr += r*r
+                gg += g*g
+                bb += b*b
+
+    mean_r = rr // countPix
+    mean_g = gg // countPix
+    mean_b = bb // countPix
+
+    rms_r = round(mean_r ** (0.5))
+    rms_g = round(mean_g ** (0.5))
+    rms_b = round(mean_b ** (0.5))
+
+    print(rms_r, rms_g, rms_b)
+    return (rms_r, rms_g, rms_b)
 
 
 if __name__ == '__main__':
@@ -174,3 +219,7 @@ if __name__ == '__main__':
     # cv2.imshow("corrected input image with colorCard", result_image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
+
+    r, g, b = getMeanRGB(outFileName)
+    color_value = getScore(r, g, b)
+    print(color_value)
